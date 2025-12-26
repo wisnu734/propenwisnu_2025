@@ -1,0 +1,11 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "sqlite"; url = env("DATABASE_URL") }
+
+model Product { id Int @id @default(autoincrement()) name String slug String @unique unit String price Int isActive Boolean @default(true) createdAt DateTime @default(now()) items OrderItem[] recipe Recipe[] }
+model Material { id Int @id @default(autoincrement()) name String @unique unit String createdAt DateTime @default(now()) txs MaterialTx[] recipe Recipe[] }
+model MaterialTx { id Int @id @default(autoincrement()) materialId Int material Material @relation(fields:[materialId], references:[id]) type String qty Float note String @default("") createdAt DateTime @default(now()) }
+model Customer { id Int @id @default(autoincrement()) name String phone String address String createdAt DateTime @default(now()) orders Order[] }
+model Order { id Int @id @default(autoincrement()) orderNo String @unique customerId Int customer Customer @relation(fields:[customerId], references:[id]) delivery DateTime status String @default("NEW") notes String @default("") createdAt DateTime @default(now()) items OrderItem[] events OrderEvent[] }
+model OrderItem { id Int @id @default(autoincrement()) orderId Int order Order @relation(fields:[orderId], references:[id]) productId Int product Product @relation(fields:[productId], references:[id]) qty Int price Int }
+model OrderEvent { id Int @id @default(autoincrement()) orderId Int order Order @relation(fields:[orderId], references:[id]) status String note String @default("") createdAt DateTime @default(now()) }
+model Recipe { id Int @id @default(autoincrement()) productId Int product Product @relation(fields:[productId], references:[id]) materialId Int material Material @relation(fields:[materialId], references:[id]) qtyPerUnit Float }
