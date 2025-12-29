@@ -1,0 +1,114 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  password  String
+  role      String    @default("USER")
+  fullName  String    @default("") 
+  phone     String    @default("")
+  address   String    @default("")
+  
+  createdAt DateTime  @default(now())
+  customers Customer[]
+}
+
+// --- Model Product ---
+model Product {
+  id        Int         @id @default(autoincrement())
+  name      String
+  slug      String      @unique
+  unit      String
+  price     Int
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  items     OrderItem[]
+  recipe    Recipe[]
+}
+
+// --- Model Material ---
+model Material {
+  id        Int          @id @default(autoincrement())
+  name      String       @unique
+  unit      String
+  createdAt DateTime     @default(now())
+  txs       MaterialTransaction[] // Ubah relasi disini
+  recipe    Recipe[]
+}
+
+// --- Model MaterialTransaction (Dulu MaterialTx) ---
+model MaterialTransaction {
+  id         Int      @id @default(autoincrement())
+  materialId Int
+  material   Material @relation(fields: [materialId], references: [id])
+  type       String
+  qty        Float
+  note       String   @default("")
+  createdAt  DateTime @default(now())
+}
+
+// --- Model Customer ---
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String
+  address   String
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+// --- Model Order ---
+model Order {
+  id         Int          @id @default(autoincrement())
+  orderNo    String       @unique
+  customerId Int
+  customer   Customer     @relation(fields: [customerId], references: [id])
+  delivery   DateTime
+  status     String       @default("NEW")
+  notes      String       @default("")
+  createdAt  DateTime     @default(now())
+  items      OrderItem[]
+  events     OrderEvent[]
+}
+
+// --- Model OrderItem ---
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  qty       Int
+  price     Int
+}
+
+// --- Model OrderEvent ---
+model OrderEvent {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id])
+  status    String
+  note      String   @default("")
+  createdAt DateTime @default(now())
+}
+
+// --- Model Recipe ---
+model Recipe {
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  product    Product  @relation(fields: [productId], references: [id])
+  materialId Int
+  material   Material @relation(fields: [materialId], references: [id])
+  qtyPerUnit Float
+}
