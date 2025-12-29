@@ -17,8 +17,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             
             {/* Menu Kanan */}
             <nav className="flex gap-2 text-sm items-center">
-              <Link className="px-4 py-2 rounded-full hover:bg-white/10 transition" href="/order">Menu & Pesan</Link>
-              <Link className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500 transition font-medium shadow-lg shadow-blue-500/20" href="/login">Login Member</Link>
+              <Link className="px-4 py-2 rounded-full hover:bg-white/10 transition" href="/order">
+                Menu & Pesan
+              </Link>
+              
+              {/* Update logika tombol Login menjadi tombol Dashboard */}
+              <Link 
+                className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500 transition font-medium shadow-lg shadow-blue-500/20" 
+                href="/user/dashboard" // Arahkan ke dashboard dulu, middleware nanti akan handle kalau belum login
+              >
+                Akun Saya
+              </Link>
             </nav>
           </div>
         </header>

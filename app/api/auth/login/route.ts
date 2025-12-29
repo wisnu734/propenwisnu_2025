@@ -3,32 +3,57 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
-    const { phone, password } = await req.json();
+    const { username, password } = await req.json();
 
-    // 1. Cari User
-    const user = await prisma.user.findFirst({ // Atau prisma.customer (sesuaikan)
-      where: { phone: phone }
-    });
+    // --- OPSI 1: LOGIN PAKAI PASSWORD .ENV (SUPER ADMIN) ---
+    // Ambil password dari .env (default "admin" kalau tidak ada)
+    const envPassword = process.env.ADMIN_PASSWORD || "admin";
+    
+    // Jika password cocok dengan .env, langsung anggap SUKSES
+    if (password === envPassword) {
+      const response = NextResponse.json({ ok: true, user: { username: "Super Admin", role: "ADMIN" } });
+      
+      // Set Cookie Admin
+      response.cookies.set("admin", "true", {
+        httpOnly: true,
+        path: "/",
+        secure: false, // False di localhost
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24, // 1 Hari
+      });
 
-    // 2. Cek Password
-    if (!user || user.password !== password) {
-      return NextResponse.json({ error: "No HP atau Password salah" }, { status: 401 });
+      console.log("✅ Login Berhasil via .ENV");
+      return response;
     }
 
-    const response = NextResponse.json({ ok: true, user });
-
-    // 3. SET COOKIE (INI YANG PENTING)
-    // secure: false -> AGAR BISA DISIMPAN DI LOCALHOST
-    response.cookies.set("userId", user.id.toString(), {
-      httpOnly: true,
-      path: "/",
-      secure: false, // <--- WAJIB FALSE KALAU DI LOCALHOST
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 1 Minggu
+    // --- OPSI 2: LOGIN PAKAI DATABASE (KODE LAMA KAMU) ---
+    // Jika password .env salah, baru kita cari di database
+    const user = await prisma.user.findUnique({
+      where: { username: username }
     });
 
-    console.log("✅ Login Berhasil, Cookie userId diset:", user.id);
-    return response;
+    // Cek User Database
+    if (user && user.password === password) {
+      // (Opsional: Cek apakah role-nya STAFF/ADMIN)
+      // if (user.role !== "STAFF") return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
+
+      const response = NextResponse.json({ ok: true, user });
+
+      // Set Cookie Admin (Sama seperti di atas)
+      response.cookies.set("admin", "true", {
+        httpOnly: true,
+        path: "/",
+        secure: false,
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24,
+      });
+
+      console.log("✅ Login Berhasil via Database:", user.username);
+      return response;
+    }
+
+    // --- JIKA GAGAL KEDUANYA ---
+    return NextResponse.json({ error: "Username atau Password salah" }, { status: 401 });
 
   } catch (error) {
     console.error("Login Error:", error);

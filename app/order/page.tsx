@@ -123,54 +123,70 @@ export default function OrderPage() {
   }
 
   // --- RETURN STATEMENT (Perhatikan tidak ada komentar aneh disini) ---
-  return (
-    <div className="max-w-5xl mx-auto grid lg:grid-cols-3 gap-8">
+return (
+  <div className="max-w-5xl mx-auto grid lg:grid-cols-3 gap-8">
+    
+    {/* BAGIAN KIRI */}
+    <div className="lg:col-span-2 space-y-6">
       
-      {/* BAGIAN KIRI */}
-      <div className="lg:col-span-2 space-y-6">
-        
-        {!isLoadingUser && (
-          isLoggedIn ? (
-            <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-xl flex items-center justify-between">
-              <div>
-                <p className="text-green-400 font-bold text-sm">✅ Terhubung ke Akun</p>
-                <p className="text-xs text-white/60">Data terisi otomatis dari profil Anda.</p>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-blue-600/10 border border-blue-500/20 p-4 rounded-xl flex items-center justify-between">
-              <p className="text-sm text-blue-200">Ingin isi data otomatis?</p>
-              <Link href="/login" className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold transition">Login Member</Link>
-            </div>
-          )
-        )}
+      {/* 1. LOGIKA TAMPILAN DATA PENGIRIM (Member vs Guest) */}
+      <div className="bg-gray-900 border border-white/10 p-6 rounded-2xl shadow-lg">
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          📦 <span className="text-white/90">Data Pengiriman</span>
+        </h2>
 
-        {/* Form */}
-        <div className="bg-gray-900 border border-white/10 p-6 rounded-2xl shadow-lg">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">📦 <span className="text-white/90">Data Pengiriman</span></h2>
+        {isLoadingUser ? (
+          <p className="text-white/50 animate-pulse">Memuat data user...</p>
+        ) : isLoggedIn ? (
+          /* --- TAMPILAN KHUSUS MEMBER (SUDAH LOGIN) --- */
+          <div className="bg-white/5 p-4 rounded-xl border border-blue-500/30">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs text-blue-400 font-bold mb-1 uppercase tracking-wider">
+                  Dikirim sebagai Member
+                </p>
+                <div className="text-lg font-bold text-white">{formData.name}</div>
+                <div className="text-white/70">{formData.phone}</div>
+                <div className="text-white/60 text-sm mt-2 max-w-md">
+                  {formData.address}
+                </div>
+              </div>
+              <Link href="/user/dashboard" className="text-xs text-white/40 hover:text-white underline">
+                Ubah Alamat
+              </Link>
+            </div>
+          </div>
+        ) : (
+          /* --- TAMPILAN GUEST (BELUM LOGIN) --- */
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-1">
+             {/* Form Input Manual (Copy paste dari file aslimu yang sebelumnya) */}
+             <div className="space-y-1">
               <label className="text-xs text-white/50 ml-1">Nama Penerima</label>
-              <input name="name" className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 focus:border-yellow-400 focus:outline-none transition" placeholder="Nama Lengkap" value={formData.name} onChange={handleInput} />
+              <input name="name" className="input" placeholder="Nama Lengkap" value={formData.name} onChange={handleInput} />
             </div>
             <div className="space-y-1">
               <label className="text-xs text-white/50 ml-1">WhatsApp / HP</label>
-              <input name="phone" className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 focus:border-yellow-400 focus:outline-none transition" placeholder="08xxxxxxxx" value={formData.phone} onChange={handleInput} />
+              <input name="phone" className="input" placeholder="08xxxxxxxx" value={formData.phone} onChange={handleInput} />
             </div>
             <div className="md:col-span-2 space-y-1">
               <label className="text-xs text-white/50 ml-1">Alamat Lengkap</label>
-              <textarea name="address" rows={2} className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 focus:border-yellow-400 focus:outline-none transition resize-none" placeholder="Jalan, No Rumah..." value={formData.address} onChange={handleInput} />
+              <textarea name="address" rows={2} className="textarea resize-none" placeholder="Jalan, No Rumah..." value={formData.address} onChange={handleInput} />
             </div>
+          </div>
+        )}
+
+        {/* --- FORM YANG MUNCUL UNTUK KEDUANYA (Tanggal & Catatan) --- */}
+        <div className="mt-4 grid md:grid-cols-2 gap-4 border-t border-white/10 pt-4">
             <div className="space-y-1">
                 <label className="text-xs text-yellow-500/80 font-bold ml-1">Tgl Pengiriman (Wajib)</label>
-                <input type="date" name="date" className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 focus:border-yellow-400 focus:outline-none transition [color-scheme:dark]" min={new Date().toISOString().slice(0, 10)} value={formData.date} onChange={handleInput} />
+                <input type="date" name="date" className="input [color-scheme:dark]" min={new Date().toISOString().slice(0, 10)} value={formData.date} onChange={handleInput} />
             </div>
             <div className="space-y-1">
               <label className="text-xs text-white/50 ml-1">Catatan (Opsional)</label>
-              <input name="notes" className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 focus:border-yellow-400 focus:outline-none transition" placeholder="Contoh: Warung Kuning" value={formData.notes} onChange={handleInput} />
+              <input name="notes" className="input" placeholder="Contoh: Warung Kuning" value={formData.notes} onChange={handleInput} />
             </div>
-          </div>
         </div>
+      </div>
 
         {/* Menu */}
         <div className="bg-gray-900 border border-white/10 p-6 rounded-2xl shadow-lg">

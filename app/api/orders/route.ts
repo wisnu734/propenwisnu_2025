@@ -1,46 +1,55 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers"; // Tambahkan ini untuk cek login
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    
-    // 1. CEK DATA YANG MASUK (Lihat di Terminal VS Code)
     console.log("📦 Data Order Masuk:", body);
 
     const { name, phone, address, deliveryDate, items, notes } = body;
 
-    // 2. VALIDASI DASAR
+    // 1. VALIDASI DATA
     if (!name || !phone || !address || !deliveryDate || !items || items.length === 0) {
-      console.log("❌ Data tidak lengkap");
       return NextResponse.json({ error: "Data pesanan tidak lengkap" }, { status: 400 });
     }
 
-    // 3. BUAT NOMOR ORDER
+    // 2. CEK APAKAH USER LOGIN (Ambil dari Cookie yang sudah kita perbaiki tadi)
+    const cookieStore = cookies();
+    const userIdCookie = cookieStore.get("userId");
+    const userId = userIdCookie ? parseInt(userIdCookie.value) : null;
+
+    // 3. BUAT NOMOR ORDER UNIK
     const orderNo = `ORD-${Date.now().toString().slice(-6)}`;
 
-    // 4. SIMPAN KE DATABASE
-    // Kita gunakan Number() dan new Date() untuk memastikan tipe datanya benar
+    // 4. SIMPAN KE DATABASE (Perhatikan perubahannya!)
     const newOrder = await prisma.order.create({
       data: {
         orderNo: orderNo,
-        name: name,
-        phone: phone,
-        address: address,
+        delivery: new Date(deliveryDate),
         notes: notes || "",
         status: "PENDING",
-        
-        // KONVERSI TANGGAL (PENTING!)
-        delivery: new Date(deliveryDate), 
 
-        // SIMPAN ITEM BELANJA
+        // --- PERBAIKAN DISINI ---
+        // Jangan taruh name/phone/address langsung di Order.
+        // Tapi masukkan ke dalam relasi 'customer'.
+        customer: {
+          create: {
+            name: name,
+            phone: phone,
+            address: address,
+            // Jika user login, sambungkan Customer ini ke User ID-nya
+            // Supaya nanti muncul di History Pesanan
+            userId: userId 
+          }
+        },
+
+        // Simpan Item Belanja
         items: {
           create: items.map((item: any) => ({
-            // KONVERSI ANGKA (PENTING! Biar gak error String vs Int)
-            productId: Number(item.productId), 
-            name: item.name,
-            price: Number(item.price),
-            qty: Number(item.qty)
+            productId: Number(item.productId),
+            qty: Number(item.qty),
+            price: Number(item.price) // Ambil harga saat transaksi terjadi
           }))
         }
       }
@@ -50,10 +59,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, orderNo: newOrder.orderNo });
 
   } catch (error: any) {
-    // 5. TANGKAP ERROR ASLINYA
-    console.error("🔥 ERROR PRISMA:", error); // <-- Cek Terminal untuk lihat error ini!
-    
-    // Kirim pesan error asli ke frontend biar ketahuan salahnya apa
+    console.error("🔥 ERROR PRISMA:", error);
     return NextResponse.json(
       { error: "Gagal: " + error.message }, 
       { status: 500 }

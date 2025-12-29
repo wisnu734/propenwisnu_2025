@@ -38,6 +38,21 @@ async function main() {
     { productId: krp500.id, materialId: air.id,    qtyPerUnit: 0.18 }
   ];
   for (const r of recs) await prisma.recipe.create({ data:r });
+
+  // --- TAMBAHAN: Buat Akun Staff ---
+  await prisma.user.upsert({
+    where: { username: 'staff' }, // Cek username biar gak dobel
+    update: {},
+    create: {
+      username: 'staff',
+      password: '123', // Password login staff
+      role: 'STAFF',
+      fullName: 'Staff',
+      phone: '085156073946',
+      address: 'Kantor Pusat'
+    }
+  });
+
   console.log("Seed done.");
 }
 main().finally(()=>prisma.$disconnect());
